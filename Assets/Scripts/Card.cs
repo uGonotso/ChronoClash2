@@ -22,7 +22,16 @@ public class Card : MonoBehaviour
 
     private void OnMouseDown()
     {
-        if (coroutineAllowed)
+        if (!facedUp && coroutineAllowed)
+        {
+            StartCoroutine(RotateCard());
+        }
+    }
+
+    // This function can be called from another script to flip the card to faced down
+    public void FlipCardDown()
+    {
+        if (facedUp && coroutineAllowed)
         {
             StartCoroutine(RotateCard());
         }
@@ -32,30 +41,14 @@ public class Card : MonoBehaviour
     {
         coroutineAllowed = false;
 
-        if (!facedUp)
+        for (float i = facedUp ? 180f : 0f; facedUp ? i >= 0f : i <= 180f; i += facedUp ? -10f : 10f)
         {
-            for (float i = 0f; i <= 180f; i += 10f)
+            transform.rotation = Quaternion.Euler(0f, i, 0f);
+            if (i == 90f)
             {
-                transform.rotation = Quaternion.Euler(0f, i, 0f);
-                if (i == 90f)
-                {
-                    rend.sprite = faceSprite;
-                }
-                yield return new WaitForSeconds(0.01f);
+                rend.sprite = facedUp ? backSprite : faceSprite;
             }
-        }
-
-        else if (facedUp)
-        {
-            for (float i = 180f; i >= 0f; i -= 10f)
-            {
-                transform.rotation = Quaternion.Euler(0f, i, 0f);
-                if (i == 90f)
-                {
-                    rend.sprite = backSprite;
-                }
-                yield return new WaitForSeconds(0.01f);
-            }
+            yield return new WaitForSeconds(0.01f);
         }
 
         coroutineAllowed = true;
