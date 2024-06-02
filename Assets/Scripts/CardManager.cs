@@ -2,6 +2,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
+
 
 public class CardManager : MonoBehaviour
 {
@@ -104,7 +106,8 @@ public class CardManager : MonoBehaviour
             // Check if the required number of matches has been made
             if (matchesMade == matchesRequired)
             {
-                Debug.Log("Level won!");
+                SceneManager.LoadScene("LevelComplete");
+
             }
         }
         else
@@ -121,7 +124,7 @@ public class CardManager : MonoBehaviour
         // Check if there are no more turns left
         if (turnsLeft == 0)
         {
-            Debug.Log("Level lost!");
+            SceneManager.LoadScene("GameOver");
         }
 
         // Remove the cards from the flippedCards list
