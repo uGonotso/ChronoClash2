@@ -7,9 +7,11 @@ public class Card : MonoBehaviour
     private SpriteRenderer rend;
 
     [SerializeField]
-    private Sprite faceSprite, backSprite;
+    public Sprite faceSprite, backSprite;
 
     private bool coroutineAllowed, facedUp;
+
+    public CardManager cardManager;
 
     // Start is called before the first frame update
     void Start()
@@ -22,13 +24,13 @@ public class Card : MonoBehaviour
 
     private void OnMouseDown()
     {
+        // Only allow the card to be flipped if it's not already faced up
         if (!facedUp && coroutineAllowed)
         {
             StartCoroutine(RotateCard());
         }
     }
 
-    // This function can be called from another script to flip the card to faced down
     public void FlipCardDown()
     {
         if (facedUp && coroutineAllowed)
@@ -54,5 +56,10 @@ public class Card : MonoBehaviour
         coroutineAllowed = true;
 
         facedUp = !facedUp;
+
+        if (facedUp)
+        {
+            cardManager.CardFlipped(this);
+        }
     }
 }
