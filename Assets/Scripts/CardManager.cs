@@ -28,6 +28,12 @@ public class CardManager : MonoBehaviour
     // Number of matches made
     private int matchesMade = 0;
 
+    // Match Audio Source
+    public AudioSource matchSound;
+
+    // No Match Audio Source
+    public AudioSource noMatchSound;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -98,6 +104,7 @@ public class CardManager : MonoBehaviour
             // It's a match! Destroy both cards
             Destroy(card1.gameObject);
             Destroy(card2.gameObject);
+            matchSound.Play();
 
             // Increment the number of matches made
             matchesMade++;
@@ -115,6 +122,8 @@ public class CardManager : MonoBehaviour
             // Not a match, flip both cards back down
             card1.FlipCardDown();
             card2.FlipCardDown();
+            noMatchSound.Play();
+
         }
 
         // Decrement the number of turns left
@@ -122,7 +131,7 @@ public class CardManager : MonoBehaviour
         turnsText.text = "Turns Left: " + turnsLeft;
 
         // Check if there are no more turns left
-        if (turnsLeft == 0)
+        if (turnsLeft == 0 && matchesMade != matchesRequired)
         {
             SceneManager.LoadScene("GameOver");
         }

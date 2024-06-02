@@ -11,6 +11,8 @@ public class Card : MonoBehaviour
 
     private bool coroutineAllowed, facedUp;
 
+    public AudioSource cardFlipSound;
+
     public CardManager cardManager;
 
     // Start is called before the first frame update
@@ -28,6 +30,7 @@ public class Card : MonoBehaviour
         if (!facedUp && coroutineAllowed)
         {
             StartCoroutine(RotateCard());
+            cardFlipSound.Play();
         }
     }
 
@@ -36,6 +39,8 @@ public class Card : MonoBehaviour
         if (facedUp && coroutineAllowed)
         {
             StartCoroutine(RotateCard());
+            cardFlipSound.Play();
+
         }
     }
 
