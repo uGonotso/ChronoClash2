@@ -479,6 +479,10 @@ MonoBehaviour:
   - {fileID: 2024018432}
   - {fileID: 1833940857}
   - {fileID: 106559214}
+  matchesText: {fileID: 1985994648}
+  turnsText: {fileID: 540427043}
+  matchesRequired: 3
+  turnsLeft: 6
 --- !u!1 &1145864567
 GameObject:
   m_ObjectHideFlags: 0

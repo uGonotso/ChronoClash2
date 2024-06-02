@@ -199,6 +199,10 @@ MonoBehaviour:
   - {fileID: 1529720483}
   - {fileID: 1285962877}
   - {fileID: 1658888454}
+  matchesText: {fileID: 1985994648}
+  turnsText: {fileID: 540427043}
+  matchesRequired: 4
+  turnsLeft: 8
 --- !u!4 &85476581
 Transform:
   m_ObjectHideFlags: 0
