@@ -4,79 +4,78 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 
-
 public class CardManager : MonoBehaviour
 {
-    // List of card prefabs
     public List<GameObject> cardPrefabs;
-
-    // List of card positions
     public List<Transform> cardPositions;
-
-    // Text objects to display the number of matches and turns remaining
     public Text matchesText, turnsText;
-
-    // Number of matches required to win and turns left to play
     public int matchesRequired, turnsLeft;
-
-    // List to store the instantiated cards
     private List<Card> cards = new List<Card>();
-
-    // Cards that are currently flipped up
     private List<Card> flippedCards = new List<Card>();
-
-    // Number of matches made
     private int matchesMade = 0;
-
-    // Match Audio Source
     public AudioSource matchSound;
-
-    // No Match Audio Source
     public AudioSource noMatchSound;
 
-    // Start is called before the first frame update
     void Start()
     {
-        // Update the text objects
-        matchesText.text = "Matches: " + matchesMade;
-        turnsText.text = "Turns Left: " + turnsLeft;
-
-        // Create a temporary list of card prefabs
-        List<GameObject> tempPrefabs = new List<GameObject>(cardPrefabs);
-
-        // Determine the number of pairs to instantiate based on the number of positions
-        int numPairs = cardPositions.Count / 2;
-
-        // Randomize the instantiation of the cards
-        for (int i = 0; i < numPairs; i++)
+        GameState gameState = SaveSystem.LoadGame(SceneManager.GetActiveScene().name);
+        if (gameState != null)
         {
-            // Select a random card prefab
-            int randomIndex = Random.Range(0, tempPrefabs.Count);
-            GameObject cardPrefab = tempPrefabs[randomIndex];
+            // Load the game state
+            turnsLeft = gameState.turnsLeft;
+            matchesMade = gameState.matchesMade;
+            matchesText.text = "Matches: " + matchesMade;
+            turnsText.text = "Turns Left: " + turnsLeft;
 
-            // Remove the selected prefab from the temporary list
-            tempPrefabs.RemoveAt(randomIndex);
-
-            for (int j = 0; j < 2; j++) // Place each card twice
+            // Load the state of each card
+            foreach (CardState cardState in gameState.cards)
             {
-                // Select a random position
-                randomIndex = Random.Range(0, cardPositions.Count);
-                Transform randomPosition = cardPositions[randomIndex];
+                // Only instantiate the card if it is not matched
+                if (!cardState.isMatched)
+                {
+                    // Find the card prefab with the same name as the card state
+                    foreach (GameObject cardPrefab in cardPrefabs)
+                    {
+                        Card cardPrefabComponent = cardPrefab.GetComponent<Card>();
+                        if (cardPrefabComponent.faceSprite.name == cardState.cardName)
+                        {
+                            // Instantiate the card at the saved position
+                            GameObject cardObject = Instantiate(cardPrefab, cardState.position, Quaternion.identity);
+                            Card card = cardObject.GetComponent<Card>();
+                            card.cardManager = this;
+                            card.SetState(cardState); // Add this line
+                            cards.Add(card);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        else
+        {
+            matchesText.text = "Matches: " + matchesMade;
+            turnsText.text = "Turns Left: " + turnsLeft;
 
-                // Remove the selected position from the list
-                cardPositions.RemoveAt(randomIndex);
+            List<GameObject> tempPrefabs = new List<GameObject>(cardPrefabs);
+            int numPairs = cardPositions.Count / 2;
 
-                // Instantiate the card at the selected position
-                GameObject cardObject = Instantiate(cardPrefab, randomPosition.position, Quaternion.identity);
+            for (int i = 0; i < numPairs; i++)
+            {
+                int randomIndex = Random.Range(0, tempPrefabs.Count);
+                GameObject cardPrefab = tempPrefabs[randomIndex];
+                tempPrefabs.RemoveAt(randomIndex);
 
-                // Get the Card component of the instantiated card
-                Card card = cardObject.GetComponent<Card>();
+                for (int j = 0; j < 2; j++)
+                {
+                    randomIndex = Random.Range(0, cardPositions.Count);
+                    Transform randomPosition = cardPositions[randomIndex];
+                    cardPositions.RemoveAt(randomIndex);
 
-                // Set the CardManager of the Card
-                card.cardManager = this;
-
-                // Add the Card component of the instantiated card to the cards list
-                cards.Add(card);
+                    GameObject cardObject = Instantiate(cardPrefab, randomPosition.position, Quaternion.identity);
+                    Card card = cardObject.GetComponent<Card>();
+                    card.cardManager = this;
+                    cards.Add(card);
+                }
             }
         }
     }
@@ -93,7 +92,6 @@ public class CardManager : MonoBehaviour
 
     private IEnumerator CheckMatch()
     {
-        // Wait for 1 second
         yield return new WaitForSeconds(1f);
 
         Card card1 = flippedCards[0];
@@ -101,43 +99,66 @@ public class CardManager : MonoBehaviour
 
         if (card1.faceSprite == card2.faceSprite)
         {
-            // It's a match! Destroy both cards
+            card1.isMatched = true; // Add this line
+            card2.isMatched = true; // Add this line
+
             Destroy(card1.gameObject);
             Destroy(card2.gameObject);
             matchSound.Play();
 
-            // Increment the number of matches made
             matchesMade++;
             matchesText.text = "Matches: " + matchesMade;
 
-            // Check if the required number of matches has been made
             if (matchesMade == matchesRequired)
             {
+                SaveSystem.DeleteSaveFile(SceneManager.GetActiveScene().name); // Delete save file here
+                yield return new WaitForSeconds(1.5f); // Wait for a sec and a second
                 SceneManager.LoadScene("LevelComplete");
-
+            }
+            else
+            {
+                // Save the game state after every card match and mismatch
+                turnsLeft--;
+                turnsText.text = "Turns Left: " + turnsLeft;
+                SaveGameState();
             }
         }
         else
         {
-            // Not a match, flip both cards back down
             card1.FlipCardDown();
             card2.FlipCardDown();
             noMatchSound.Play();
 
+            // Save the game state after every card match and mismatch
+            turnsLeft--;
+            turnsText.text = "Turns Left: " + turnsLeft;
+            SaveGameState();
         }
 
-        // Decrement the number of turns left
-        turnsLeft--;
-        turnsText.text = "Turns Left: " + turnsLeft;
-
-        // Check if there are no more turns left
         if (turnsLeft == 0 && matchesMade != matchesRequired)
         {
+            SaveSystem.DeleteSaveFile(SceneManager.GetActiveScene().name);
             SceneManager.LoadScene("GameOver");
         }
 
-        // Remove the cards from the flippedCards list
         flippedCards.Remove(card1);
         flippedCards.Remove(card2);
+    }
+
+
+    private void SaveGameState()
+    {
+        GameState gameState = new GameState();
+        gameState.turnsLeft = turnsLeft;
+        gameState.matchesMade = matchesMade;
+        gameState.cards = new List<CardState>();
+        foreach (Card card in cards)
+        {
+            if (card != null)
+            {
+                gameState.cards.Add(card.GetState());
+            }
+        }
+        SaveSystem.SaveGame(gameState, SceneManager.GetActiveScene().name);
     }
 }

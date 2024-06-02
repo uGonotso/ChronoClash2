@@ -5,17 +5,14 @@ using UnityEngine;
 public class Card : MonoBehaviour
 {
     private SpriteRenderer rend;
-
     [SerializeField]
     public Sprite faceSprite, backSprite;
-
     private bool coroutineAllowed, facedUp;
-
     public AudioSource cardFlipSound;
-
     public CardManager cardManager;
 
-    // Start is called before the first frame update
+    public bool isMatched = false;
+
     void Start()
     {
         rend = GetComponent<SpriteRenderer>();
@@ -26,7 +23,6 @@ public class Card : MonoBehaviour
 
     private void OnMouseDown()
     {
-        // Only allow the card to be flipped if it's not already faced up
         if (!facedUp && coroutineAllowed)
         {
             StartCoroutine(RotateCard());
@@ -40,7 +36,6 @@ public class Card : MonoBehaviour
         {
             StartCoroutine(RotateCard());
             cardFlipSound.Play();
-
         }
     }
 
@@ -59,12 +54,30 @@ public class Card : MonoBehaviour
         }
 
         coroutineAllowed = true;
-
         facedUp = !facedUp;
 
         if (facedUp)
         {
             cardManager.CardFlipped(this);
         }
+    }
+
+    public void SetState(CardState state)
+    {
+        // Set the state of the card based on the CardState object
+        transform.position = state.position;
+        gameObject.SetActive(state.isInGame);
+        isMatched = state.isMatched; 
+    }
+
+    public CardState GetState()
+    {
+        CardState state = new CardState();
+        // Populate the CardState object based on the current state of the card
+        state.cardName = faceSprite != null ? faceSprite.name : ""; // Null check
+        state.position = transform.position;
+        state.isInGame = gameObject.activeSelf;
+        state.isMatched = isMatched; 
+        return state;
     }
 }
